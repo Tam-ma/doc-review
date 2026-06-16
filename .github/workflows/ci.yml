@@ -1,0 +1,50 @@
+name: CI
+
+# Pre-merge gate. deploy.yml only runs on push to main (post-merge), so without
+# this PRs would merge unverified. Keep this fast: typecheck, unit tests, build.
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9'
+
+jobs:
+  verify:
+    name: Typecheck, Test, Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Test
+        run: pnpm test:run
+
+      - name: Build
+        run: pnpm build

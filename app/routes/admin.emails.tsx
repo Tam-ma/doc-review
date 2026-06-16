@@ -4,7 +4,8 @@ import { useLoaderData, Form, useNavigation, useActionData } from 'react-router'
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, desc, gte } from 'drizzle-orm';
 import { emailQueue, emailLog } from '../lib/db/schema';
-import { requireAuth } from '../lib/auth/session.server';
+import { requireAuthWithRole } from '../lib/auth/middleware';
+import { Role } from '../lib/auth/permissions';
 import { processEmailQueue, retryFailedEmails, getQueueStats, cleanupOldEmails } from '../lib/email/queue.server';
 
 interface LoaderData {
@@ -35,11 +36,11 @@ interface LoaderData {
 }
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const user = await requireAuth(request, context);
+  const user = await requireAuthWithRole(request, context);
 
-  // Check if user is admin
-  if (user.role !== 'admin') {
-    throw new Response('Unauthorized', { status: 403 });
+  // Only admins may access the email dashboard.
+  if (user.role !== Role.ADMIN) {
+    throw new Response('Forbidden', { status: 403 });
   }
 
   const db = drizzle(context.env.DB);
@@ -98,11 +99,11 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const user = await requireAuth(request, context);
+  const user = await requireAuthWithRole(request, context);
 
-  // Check if user is admin
-  if (user.role !== 'admin') {
-    throw new Response('Unauthorized', { status: 403 });
+  // Only admins may access the email dashboard.
+  if (user.role !== Role.ADMIN) {
+    throw new Response('Forbidden', { status: 403 });
   }
 
   const formData = await request.formData();

@@ -34,13 +34,26 @@ export default [
   route("unsubscribe/success", "routes/unsubscribe.success.tsx"),
   route("unsubscribe/:token", "routes/unsubscribe.$token.tsx"),
 
+  // Admin dashboards (all require admin role)
+  route("admin/users", "routes/admin.users.tsx"),
+  route("admin/emails", "routes/admin.emails.tsx"),
+  route("admin/search", "routes/admin.search.tsx"),
+  route("admin/webhooks", "routes/admin.webhooks.tsx"),
+
+  // Inbound git provider webhooks (signature/token verified)
+  route("webhooks/github", "routes/webhooks.github.tsx"),
+  route("webhooks/gitlab", "routes/webhooks.gitlab.tsx"),
+
   // Dev/test utilities
   route("test-env", "routes/test-env.tsx"),
   route("test-doc", "routes/test-doc.tsx"),
 
-  // Document browsing
+  // Document browsing (sidebar layout)
   route("docs", "routes/docs.tsx", [
     index("routes/docs._index.tsx"),
     route(":documentId", "routes/docs.$documentId.tsx"),
   ]),
+  // Standalone full-page doc views (own chrome, so not nested under docs layout)
+  route("docs/:documentId/suggestions", "routes/docs.$documentId.suggestions.tsx"),
+  route("docs/:documentId/with-comments", "routes/docs.$documentId.with-comments.tsx"),
 ] satisfies RouteConfig;

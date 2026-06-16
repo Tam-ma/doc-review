@@ -5,9 +5,10 @@
  */
 
 import { useLoaderData, useActionData, Form, useNavigation } from 'react-router';
-import { data as json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
+import { data as json, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
 import { useState } from 'react';
-import { getUser } from '~/lib/auth/session.server';
+import { requireAuthWithRole } from '~/lib/auth/middleware';
+import { Role } from '~/lib/auth/permissions';
 import { WebhookStorage } from '~/lib/webhooks/storage.server';
 import type {
   WebhookEvent,
@@ -43,18 +44,12 @@ interface ActionData {
  * Check if user is admin
  */
 async function requireAdmin(request: Request, env: any) {
-  const user = await getUser(request, { env });
+  // requireAuthWithRole resolves the user's role from the database and throws a
+  // login redirect when unauthenticated; we then enforce the admin role.
+  const user = await requireAuthWithRole(request, { env });
 
-  if (!user) {
-    throw redirect('/auth/login');
-  }
-
-  // Check if user is admin (implement your admin check logic)
-  const isAdmin = user.email?.endsWith('@admin.com') ||
-                  user.id === env.ADMIN_USER_ID;
-
-  if (!isAdmin) {
-    throw new Response('Unauthorized', { status: 403 });
+  if (user.role !== Role.ADMIN) {
+    throw new Response('Forbidden', { status: 403 });
   }
 
   return user;

@@ -1,7 +1,6 @@
 import { useLoaderData, Link } from 'react-router';
 import type { MetaFunction } from 'react-router';
 import { LoginButton } from '../components/auth/LoginButton';
-import { UserMenu } from '../components/auth/UserMenu';
 import { getUser } from '../lib/auth/session.server';
 
 export const meta: MetaFunction = () => {
@@ -22,19 +21,6 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Tamma Documentation Review</h1>
-            </div>
-            <div className="flex items-center">
-              {user ? <UserMenu user={user} /> : <LoginButton provider="github" />}
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white overflow-hidden shadow rounded-lg">

@@ -35,6 +35,7 @@ export default [
   route("unsubscribe/:token", "routes/unsubscribe.$token.tsx"),
 
   // Admin dashboards (all require admin role)
+  route("admin", "routes/admin._index.tsx"),
   route("admin/users", "routes/admin.users.tsx"),
   route("admin/emails", "routes/admin.emails.tsx"),
   route("admin/search", "routes/admin.search.tsx"),

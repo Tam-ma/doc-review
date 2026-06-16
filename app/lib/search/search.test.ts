@@ -65,6 +65,38 @@ class MockDatabase {
     return results as T[];
   }
 
+  // The search services talk to the underlying D1 client, not Drizzle:
+  //   db.$client.prepare(sql).bind(...params).run() | .first() | .all()
+  // Emulate just that surface on top of the canned `all()` results above so
+  // these stay fast unit tests. (A real better-sqlite3 + FTS5 harness would be
+  // a higher-fidelity follow-up.)
+  get $client() {
+    const self = this;
+    return {
+      prepare(sql: string) {
+        let bound: any[] = [];
+        const stmt = {
+          bind(...params: any[]) {
+            bound = params;
+            return stmt;
+          },
+          async run() {
+            return { success: true as const, meta: { changes: 1, duration: 0 } };
+          },
+          async first<T = any>(_column?: string): Promise<T | null> {
+            const rows = await self.all<any>(sql, bound);
+            return (rows[0] ?? null) as T | null;
+          },
+          async all<T = any>(): Promise<{ results: T[]; success: true; meta: Record<string, unknown> }> {
+            const rows = await self.all<any>(sql, bound);
+            return { results: rows as T[], success: true, meta: {} };
+          },
+        };
+        return stmt;
+      },
+    };
+  }
+
   private getParamForClause(sql: string, params: any[], clause: string): any {
     // Count the number of '?' before this clause to find the param index
     const beforeClause = sql.substring(0, sql.indexOf(clause));

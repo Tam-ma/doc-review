@@ -199,8 +199,9 @@ describe('Sessions API Integration Tests', () => {
       expect(response.status).toBe(201);
       expect(data.session).toBeDefined();
 
-      const docPaths = JSON.parse(data.session.docPaths);
-      expect(docPaths).toHaveLength(3);
+      // docPaths is returned as a parsed array (ReviewSession.docPaths: string[]),
+      // not a JSON string, so assert on it directly.
+      expect(data.session.docPaths).toHaveLength(3);
     });
 
     it('should set primary doc path as first document', async () => {

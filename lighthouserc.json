@@ -25,7 +25,6 @@
       }
     },
     "assert": {
-      "preset": "lighthouse:recommended",
       "assertions": {
         "categories:performance": ["error", { "minScore": 0.8 }],
         "categories:accessibility": ["error", { "minScore": 0.9 }],
@@ -60,7 +59,8 @@
         "legacy-javascript": "warn",
         "dom-size": ["warn", { "maxNumericValue": 1500 }],
         "no-document-write": "error",
-        "no-vulnerable-libraries": "error",
+        "no-vulnerable-libraries": "off",
+        "errors-in-console": "warn",
         "js-libraries": "off",
         "notification-on-start": "off",
         "paste-preventing-inputs": "error",

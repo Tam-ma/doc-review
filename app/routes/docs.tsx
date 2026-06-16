@@ -3,6 +3,13 @@ import { getUser } from '../lib/auth/session.server';
 import { DocumentLoader } from '../lib/docs/loader.server';
 import { Sidebar, Breadcrumbs } from '../components/navigation';
 
+export function meta() {
+  return [
+    { title: 'Docs — Tamma Doc Review' },
+    { name: 'description', content: "Browse and review Tamma's technical documentation." },
+  ];
+}
+
 export async function loader({ request, context }: any) {
   const env = context.env ?? context.cloudflare?.env ?? {};
 

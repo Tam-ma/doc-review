@@ -11,6 +11,10 @@ import { getUser } from "~/lib/auth/session.server";
 import { getUserById } from "~/lib/db/users.server";
 import { AppHeader } from "~/components/AppHeader";
 
+export const links = () => [
+  { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+];
+
 export async function loader({ request, context }: LoaderFunctionArgs) {
   // Resolve the signed-in user (with DB role) for the global header. This runs
   // on every page, so it must never throw — fall back to logged-out on error.

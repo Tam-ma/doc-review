@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`@tamma/doc-review` — a collaborative documentation review platform. Teams comment on, discuss, and suggest edits to Markdown docs that live in a **Git repository** (not in this app's database). It runs SSR on **Cloudflare Pages** using **React Router v7** (framework mode), with **D1** (SQLite) + **Drizzle ORM** for review metadata, a **Durable Object** for realtime, **KV** for caching, and **R2** for attachments. Package manager is **pnpm**; Node >= 22.
+`@tamma/doc-review` — a collaborative documentation review platform. Teams comment on, discuss, and suggest edits to Markdown docs that live in a **Git repository** (not in this app's database). It runs SSR on **Cloudflare Workers** (via `@cloudflare/vite-plugin`) using **React Router v7** (framework mode), with **D1** (SQLite) + **Drizzle ORM** for review metadata, a **Durable Object** for realtime, **KV** for caching, and **R2** for attachments. Package manager is **pnpm**; Node >= 22.
 
 ## Commands
 
 ```bash
 pnpm dev                 # local dev (react-router/vite) on port 6700 (override with PORT)
 pnpm build               # production build -> build/client + build/server
-pnpm preview             # serve the built app via wrangler pages dev (E2E targets port 6701)
+pnpm preview             # vite preview: runs the built worker in workerd, serves port 6701 (CI/E2E target)
 pnpm typecheck           # tsc --noEmit — BLOCKS CI, run before committing
 pnpm lint                # eslint . --ext .ts,.tsx  (CI runs this continue-on-error)
 pnpm format              # prettier --write
@@ -66,7 +66,7 @@ On first write, `syncUserRecord(env, user)` upserts the session user into the `u
 `getGitProvider(env)` (`app/lib/git/provider.server.ts`) returns a `GitProvider` by `GIT_PROVIDER` (`github` → `GitHubProvider`, default `stub`). This is how docs are fetched and how suggestions are meant to become branches/PRs. Document *content* is loaded by `app/lib/docs/loader.server.ts`, which has two paths: local filesystem via `REPO_PATH` (Node/dev) and the Git API (production), with KV caching. When `GIT_PROVIDER=github`, `GIT_OWNER` and `GIT_REPO` are required (validated in `getGitProvider`, which throws if missing). `REPO_PATH` is a **local-dev-only** filesystem override — leave it unset in production (Workers have no filesystem); it must not be committed to `wrangler.jsonc`.
 
 ### Realtime (Durable Object + SSE)
-`EventBroadcaster` (`app/lib/events/event-broadcaster.ts`) is a Durable Object that holds SSE connections in memory and fans out events (`/sse`, `/publish`, `/recent`). It's exported from the worker entry (`app/worker.ts`) and bound as `EVENT_BROADCASTER`. Server code publishes via helpers in `app/lib/events/publisher.server.ts` (e.g. `publishCommentEvent(context, ...)`); the client subscribes with the `useRealtimeEvents` hook.
+`EventBroadcaster` (`app/lib/events/event-broadcaster.ts`) is a Durable Object that holds SSE connections in memory and fans out events (`/sse`, `/publish`, `/recent`). It's exported from the worker entry (`workers/app.ts`) and bound as `EVENT_BROADCASTER` (registered via a `migrations` block in `wrangler.jsonc`). Server code publishes via helpers in `app/lib/events/publisher.server.ts` (e.g. `publishCommentEvent(context, ...)`); the client subscribes with the `useRealtimeEvents` hook.
 
 ### Data model (Drizzle, `app/lib/db/schema.ts`)
 Core tables: `users`, `reviewSessions`, `comments`, `suggestions`, `discussions`, `discussionMessages`, `documentMetadata`, `activityLog`, plus email (`emailQueue`, `emailLog`), `notificationPreferences`, `documentWatches`. Conventions:
@@ -80,9 +80,8 @@ Core tables: `users`, `reviewSessions`, `comments`, `suggestions`, `discussions`
 ### Email
 Outbound mail is queue-based: write to `emailQueue`, then a processor sends via **Resend**. Templates are React Email components in `app/lib/email/templates/`.
 
-### Worker entry points
-- `app/worker.ts` — the active Pages handler (`createPagesFunctionHandler`) and the export point for the `EventBroadcaster` DO. Used by `wrangler.jsonc` (`pages_build_output_dir`).
-- `workers/index.ts` — an alternate plain-Worker handler (`@ts-nocheck`); not the Pages path.
+### Worker entry point
+- `workers/app.ts` — the Cloudflare **Workers** entry (`wrangler.jsonc` `main`). Wraps the React Router server build via `createRequestHandler`, passes bindings to loaders as `context.cloudflare.env`, and exports the `EventBroadcaster` Durable Object. The `@cloudflare/vite-plugin` (in `vite.config.ts`, requires `future.v8_viteEnvironmentApi`) bundles it; `react-router build` emits the deployable worker to `build/server/index.js` and client assets to `build/client/`.
 
 ## Testing notes
 - **Two Vitest configs exist and conflict**: `vitest.config.ts` (environment `node`, the one that applies to `pnpm test`) vs. the `test` block in `vite.config.ts` (`happy-dom`). Edit `vitest.config.ts` for test behavior.
@@ -90,7 +89,7 @@ Outbound mail is queue-based: write to `emailQueue`, then a processor sends via 
 - Coverage thresholds (enforced by `test:coverage`): lines 80 / functions 75 / branches 75 / statements 80, scoped to `app/routes/api.*` and `app/lib/**`.
 
 ## CI / deploy
-`.github/workflows/deploy.yml` runs on push to `main`: **test** (`typecheck` → `lint` [non-blocking] → `test:run`) → **e2e** (build, local D1 migrate+seed, `pnpm preview`, Playwright on `:6701`/`/health`) → **build** → **deploy** (`wrangler pages deploy` to project `tamma-doc-review`, applying remote D1 migrations if pending) → **smoke-test**. `typecheck` and `test:run` block merges; `lint` does not. Secrets are set with `wrangler pages secret put ...`; bindings/IDs live in `wrangler.jsonc` / `wrangler.production.jsonc` (see `.env.example` for the full config surface).
+`.github/workflows/deploy.yml` runs on push to `main`: **test** (`typecheck` → `lint` [non-blocking] → `test:run`) → **e2e** (build, local D1 migrate+seed, `pnpm preview`, Playwright on `:6701`) → **build** → **deploy** (`pnpm run deploy` = `react-router build && wrangler deploy`, applying remote D1 migrations if pending) → **smoke-test** (`/health`). `typecheck` and `test:run` block merges; `lint` does not. The readiness waits probe `/` (not `/health`, which 503s without git OAuth creds). Secrets are set with `wrangler secret put ...`; bindings/IDs live in `wrangler.jsonc` / `wrangler.production.jsonc` (see `.env.example` for the full config surface).
 
 ## Reference docs
 `docs/history/` contains design/implementation write-ups. Treat them as **historical** — some predate the current code (e.g. they mention `wrangler.toml` and Cloudflare Access, whereas the app now uses `wrangler.jsonc` and OAuth). Trust the source over these.

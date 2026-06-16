@@ -60,7 +60,9 @@ jobs:
         working-directory: .
         run: |
           for i in {1..30}; do
-            if curl -sf http://localhost:6701/health > /dev/null 2>&1; then
+            # Probe the homepage, not /health: /health returns 503 without git
+            # OAuth creds (git check), which would falsely fail readiness.
+            if curl -sf http://localhost:6701/ > /dev/null 2>&1; then
               echo "Server ready!"
               exit 0
             fi

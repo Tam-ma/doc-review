@@ -6,7 +6,6 @@
       "url": [
         "http://localhost:6701/",
         "http://localhost:6701/docs",
-        "http://localhost:6701/docs/architecture.md",
         "http://localhost:6701/search?q=test"
       ],
       "settings": {

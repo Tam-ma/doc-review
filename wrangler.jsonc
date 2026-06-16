@@ -45,8 +45,6 @@
     "GIT_REPO": "tamma",
     "GIT_REF": "main",
     "GIT_DEFAULT_BRANCH": "main",
-    // Document repository path
-    "REPO_PATH": "/home/meywd/tamma/docs",
     "DOCS_BASE_PATH": "docs",
     "NODE_ENV": "production",
   },

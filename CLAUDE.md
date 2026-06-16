@@ -63,7 +63,7 @@ OAuth via the Git provider (GitHub/GitLab) → signed session cookie (`app/lib/a
 On first write, `syncUserRecord(env, user)` upserts the session user into the `users` table.
 
 ### Git provider abstraction
-`getGitProvider(env)` (`app/lib/git/provider.server.ts`) returns a `GitProvider` by `GIT_PROVIDER` (`github` → `GitHubProvider`, default `stub`). This is how docs are fetched and how suggestions are meant to become branches/PRs. Document *content* is loaded by `app/lib/docs/loader.server.ts`, which has two paths: local filesystem via `REPO_PATH` (Node/dev) and the Git API (production), with KV caching.
+`getGitProvider(env)` (`app/lib/git/provider.server.ts`) returns a `GitProvider` by `GIT_PROVIDER` (`github` → `GitHubProvider`, default `stub`). This is how docs are fetched and how suggestions are meant to become branches/PRs. Document *content* is loaded by `app/lib/docs/loader.server.ts`, which has two paths: local filesystem via `REPO_PATH` (Node/dev) and the Git API (production), with KV caching. When `GIT_PROVIDER=github`, `GIT_OWNER` and `GIT_REPO` are required (validated in `getGitProvider`, which throws if missing). `REPO_PATH` is a **local-dev-only** filesystem override — leave it unset in production (Workers have no filesystem); it must not be committed to `wrangler.jsonc`.
 
 ### Realtime (Durable Object + SSE)
 `EventBroadcaster` (`app/lib/events/event-broadcaster.ts`) is a Durable Object that holds SSE connections in memory and fans out events (`/sse`, `/publish`, `/recent`). It's exported from the worker entry (`app/worker.ts`) and bound as `EVENT_BROADCASTER`. Server code publishes via helpers in `app/lib/events/publisher.server.ts` (e.g. `publishCommentEvent(context, ...)`); the client subscribes with the `useRealtimeEvents` hook.

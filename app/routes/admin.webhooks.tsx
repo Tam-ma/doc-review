@@ -56,7 +56,7 @@ async function requireAdmin(request: Request, env: any) {
 }
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
-  const env = context.cloudflare?.env as {
+  const env = (context.env ?? context.cloudflare?.env) as {
     DB: D1Database;
     GITHUB_WEBHOOK_SECRET?: string;
     GITLAB_WEBHOOK_TOKEN?: string;
@@ -107,7 +107,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, context }: ActionFunctionArgs) {
-  const env = context.cloudflare?.env as {
+  const env = (context.env ?? context.cloudflare?.env) as {
     DB: D1Database;
     GITHUB_WEBHOOK_SECRET?: string;
     GITLAB_WEBHOOK_TOKEN?: string;
@@ -354,7 +354,7 @@ export default function AdminWebhooks() {
               <p className="text-sm text-gray-500">
                 {process.env.NODE_ENV === 'production'
                   ? 'Configure GITHUB_WEBHOOK_SECRET environment variable'
-                  : 'Set GITHUB_WEBHOOK_SECRET in wrangler.toml vars'}
+                  : 'Set GITHUB_WEBHOOK_SECRET in wrangler.jsonc vars'}
               </p>
             </div>
 
@@ -415,7 +415,7 @@ export default function AdminWebhooks() {
               <p className="text-sm text-gray-500">
                 {process.env.NODE_ENV === 'production'
                   ? 'Configure GITLAB_WEBHOOK_TOKEN environment variable'
-                  : 'Set GITLAB_WEBHOOK_TOKEN in wrangler.toml vars'}
+                  : 'Set GITLAB_WEBHOOK_TOKEN in wrangler.jsonc vars'}
               </p>
             </div>
 

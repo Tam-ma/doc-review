@@ -36,6 +36,7 @@
     "test:e2e:webkit": "playwright test --project=webkit",
     "test:e2e:report": "playwright show-report",
     "test:e2e:update-snapshots": "playwright test --update-snapshots",
+    "test:e2e:ci": "playwright test --project=chromium playwright/tests/homepage.spec.ts playwright/tests/search.spec.ts playwright/tests/documents.spec.ts",
     "playwright:install": "playwright install --with-deps",
     "lighthouse": "lhci autorun",
     "lighthouse:install": "npm install -g @lhci/cli@0.14.x"

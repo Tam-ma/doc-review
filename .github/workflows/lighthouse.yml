@@ -13,11 +13,18 @@ env:
   NODE_VERSION: '22'
   PNPM_VERSION: '9'
 
+permissions:
+  contents: read
+
 jobs:
   lighthouse:
     name: Lighthouse Performance Audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Needs PR write to post the Lighthouse results comment.
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code

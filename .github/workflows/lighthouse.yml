@@ -13,11 +13,18 @@ env:
   NODE_VERSION: '22'
   PNPM_VERSION: '9'
 
+permissions:
+  contents: read
+
 jobs:
   lighthouse:
     name: Lighthouse Performance Audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Needs PR write to post the Lighthouse results comment.
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -60,7 +67,9 @@ jobs:
         working-directory: .
         run: |
           for i in {1..30}; do
-            if curl -sf http://localhost:6701/health > /dev/null 2>&1; then
+            # Probe the homepage, not /health: /health returns 503 without git
+            # OAuth creds (git check), which would falsely fail readiness.
+            if curl -sf http://localhost:6701/ > /dev/null 2>&1; then
               echo "Server ready!"
               exit 0
             fi

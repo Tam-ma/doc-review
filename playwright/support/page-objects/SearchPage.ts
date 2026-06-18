@@ -106,7 +106,9 @@ export class SearchPage extends BasePage {
    * Click on result at index
    */
   async clickResult(index: number) {
-    await this.resultItems.nth(index).click();
+    // Click the result's link (the title), not the card container, so the
+    // browser actually navigates to the document.
+    await this.resultItems.nth(index).getByRole('link').first().click();
     await this.page.waitForLoadState('networkidle');
   }
 

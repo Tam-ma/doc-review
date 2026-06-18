@@ -5,9 +5,10 @@
  */
 
 import { useLoaderData, useActionData, Form, useNavigation } from 'react-router';
-import { data as json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
+import { data as json, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
 import { useState } from 'react';
-import { getUser } from '~/lib/auth/session.server';
+import { requireAuthWithRole } from '~/lib/auth/middleware';
+import { Role } from '~/lib/auth/permissions';
 import { WebhookStorage } from '~/lib/webhooks/storage.server';
 import type {
   WebhookEvent,
@@ -43,25 +44,19 @@ interface ActionData {
  * Check if user is admin
  */
 async function requireAdmin(request: Request, env: any) {
-  const user = await getUser(request, { env });
+  // requireAuthWithRole resolves the user's role from the database and throws a
+  // login redirect when unauthenticated; we then enforce the admin role.
+  const user = await requireAuthWithRole(request, { env });
 
-  if (!user) {
-    throw redirect('/auth/login');
-  }
-
-  // Check if user is admin (implement your admin check logic)
-  const isAdmin = user.email?.endsWith('@admin.com') ||
-                  user.id === env.ADMIN_USER_ID;
-
-  if (!isAdmin) {
-    throw new Response('Unauthorized', { status: 403 });
+  if (user.role !== Role.ADMIN) {
+    throw new Response('Forbidden', { status: 403 });
   }
 
   return user;
 }
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
-  const env = context.cloudflare?.env as {
+  const env = (context.env ?? context.cloudflare?.env) as {
     DB: D1Database;
     GITHUB_WEBHOOK_SECRET?: string;
     GITLAB_WEBHOOK_TOKEN?: string;
@@ -112,7 +107,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, context }: ActionFunctionArgs) {
-  const env = context.cloudflare?.env as {
+  const env = (context.env ?? context.cloudflare?.env) as {
     DB: D1Database;
     GITHUB_WEBHOOK_SECRET?: string;
     GITLAB_WEBHOOK_TOKEN?: string;
@@ -359,7 +354,7 @@ export default function AdminWebhooks() {
               <p className="text-sm text-gray-500">
                 {process.env.NODE_ENV === 'production'
                   ? 'Configure GITHUB_WEBHOOK_SECRET environment variable'
-                  : 'Set GITHUB_WEBHOOK_SECRET in wrangler.toml vars'}
+                  : 'Set GITHUB_WEBHOOK_SECRET in wrangler.jsonc vars'}
               </p>
             </div>
 
@@ -420,7 +415,7 @@ export default function AdminWebhooks() {
               <p className="text-sm text-gray-500">
                 {process.env.NODE_ENV === 'production'
                   ? 'Configure GITLAB_WEBHOOK_TOKEN environment variable'
-                  : 'Set GITLAB_WEBHOOK_TOKEN in wrangler.toml vars'}
+                  : 'Set GITLAB_WEBHOOK_TOKEN in wrangler.jsonc vars'}
               </p>
             </div>
 

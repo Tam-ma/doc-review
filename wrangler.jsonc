@@ -1,9 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tamma-doc-review",
+  "main": "./workers/app.ts",
   "compatibility_date": "2025-01-15",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "./build/client",
   "observability": {
     "enabled": true,
   },
@@ -27,10 +27,17 @@
       {
         "name": "EVENT_BROADCASTER",
         "class_name": "EventBroadcaster",
-        "script_name": "tamma-doc-review",
       },
     ],
   },
+  // Durable Object migration: register the EventBroadcaster class (SQLite-backed
+  // is the default for new DO classes on Workers).
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["EventBroadcaster"],
+    },
+  ],
   // Optional: For file attachments
   "r2_buckets": [
     {
@@ -45,8 +52,6 @@
     "GIT_REPO": "tamma",
     "GIT_REF": "main",
     "GIT_DEFAULT_BRANCH": "main",
-    // Document repository path
-    "REPO_PATH": "/home/meywd/tamma/docs",
     "DOCS_BASE_PATH": "docs",
     "NODE_ENV": "production",
   },

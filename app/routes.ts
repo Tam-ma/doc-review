@@ -2,18 +2,59 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
   index("routes/_index.tsx"),
+  route("health", "routes/health.tsx"),
+
+  // Auth (OAuth via git provider)
   route("auth/login", "routes/auth.login.tsx"),
   route("auth/callback", "routes/auth.callback.tsx"),
   route("auth/logout", "routes/auth.logout.tsx"),
+
+  // Search + realtime
   route("search", "routes/search.tsx"),
+  route("api/search", "routes/api.search.tsx"),
+  route("api/search/suggestions", "routes/api.search.suggestions.tsx"),
+  route("api/events", "routes/api.events.tsx"),
+
+  // Collaboration APIs
+  route("api/comments", "routes/api.comments.tsx"),
+  route("api/comments/:id", "routes/api.comments.$id.tsx"),
+  route("api/suggestions", "routes/api.suggestions.tsx"),
+  route("api/suggestions/:id", "routes/api.suggestions.$id.tsx"),
+  route("api/discussions", "routes/api.discussions.tsx"),
+  route("api/discussions/:id", "routes/api.discussions.$id.tsx"),
+  route("api/discussions/:id/messages", "routes/api.discussions.$id.messages.tsx"),
+  route(
+    "api/discussions/:id/messages/:messageId",
+    "routes/api.discussions.$id.messages.$messageId.tsx"
+  ),
+  route("api/sessions", "routes/api.sessions.tsx"),
+
+  // Notification preferences + email unsubscribe
+  route("settings/notifications", "routes/settings.notifications.tsx"),
+  route("unsubscribe/success", "routes/unsubscribe.success.tsx"),
+  route("unsubscribe/:token", "routes/unsubscribe.$token.tsx"),
+
+  // Admin dashboards (all require admin role)
+  route("admin", "routes/admin._index.tsx"),
+  route("admin/users", "routes/admin.users.tsx"),
+  route("admin/emails", "routes/admin.emails.tsx"),
+  route("admin/search", "routes/admin.search.tsx"),
+  route("admin/webhooks", "routes/admin.webhooks.tsx"),
+
+  // Inbound git provider webhooks (signature/token verified)
+  route("webhooks/github", "routes/webhooks.github.tsx"),
+  route("webhooks/gitlab", "routes/webhooks.gitlab.tsx"),
+
+  // Dev/test utilities
   route("test-env", "routes/test-env.tsx"),
   route("test-doc", "routes/test-doc.tsx"),
-  route("api/comments", "routes/api.comments.tsx"),
-  route("api/suggestions", "routes/api.suggestions.tsx"),
-  route("api/discussions", "routes/api.discussions.tsx"),
-  route("api/sessions", "routes/api.sessions.tsx"),
+
+  // Document browsing (sidebar layout)
   route("docs", "routes/docs.tsx", [
     index("routes/docs._index.tsx"),
     route(":documentId", "routes/docs.$documentId.tsx"),
   ]),
+  // Standalone full-page doc views (own chrome, so not nested under docs layout)
+  route("docs/:documentId/suggestions", "routes/docs.$documentId.suggestions.tsx"),
+  route("docs/:documentId/with-comments", "routes/docs.$documentId.with-comments.tsx"),
 ] satisfies RouteConfig;

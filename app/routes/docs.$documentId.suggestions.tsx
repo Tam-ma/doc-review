@@ -1,13 +1,14 @@
 import { useLoaderData, Link } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
-import { requireAuth } from '../lib/auth/session.server';
+import { requireAuthWithRole } from '../lib/auth/middleware';
+import { canApprove } from '../lib/auth/permissions';
 import { DocumentLoader } from '../lib/docs/loader.server';
 import { SuggestionReviewPanel } from '../components/suggestions/SuggestionReviewPanel';
 import type { Document } from '../lib/types/document';
 
 export async function loader({ request, context, params }: any) {
   const env = context.env ?? context.cloudflare?.env ?? {};
-  await requireAuth(request, { env });
+  const user = await requireAuthWithRole(request, { env });
 
   const { documentId } = params;
 
@@ -22,8 +23,7 @@ export async function loader({ request, context, params }: any) {
     const documentPath = mapDocumentIdToPath(documentId);
     const document = await loader.loadDocument(documentPath);
 
-    // For now, set canReview to false until we add role support to user type
-    const canReview = false;
+    const canReview = canApprove(user);
 
     return { document, canReview };
   } catch (error) {

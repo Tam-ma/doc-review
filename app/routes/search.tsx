@@ -5,6 +5,13 @@ import { getDb, hasDatabase } from '../lib/db/client.server';
 import { SearchQueryBuilder } from '../lib/search/query-builder.server';
 import { Search } from 'lucide-react';
 
+export function meta() {
+  return [
+    { title: 'Search — Tamma Doc Review' },
+    { name: 'description', content: "Search Tamma's documentation, comments, suggestions, and discussions." },
+  ];
+}
+
 /**
  * Search Results Page
  * /search?q=keyword&type=comments&status=open&userId=user-123&docPath=/docs/foo.md

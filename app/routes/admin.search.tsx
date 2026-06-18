@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useLoaderData, useFetcher, Link } from 'react-router';
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router';
 import { data as json } from 'react-router';
-import { requireAuth } from '../lib/auth/session.server';
+import { requireAuthWithRole } from '../lib/auth/middleware';
+import { Role } from '../lib/auth/permissions';
 import { getDb } from '../lib/db/client.server';
 import { SearchAnalytics } from '../lib/search/analytics.server';
 import { SearchIndexer } from '../lib/search/indexer.server';
@@ -52,8 +53,8 @@ interface LoaderData {
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   // Require admin authentication
-  const user = await requireAuth(request, context);
-  if (user.role !== 'admin') {
+  const user = await requireAuthWithRole(request, context);
+  if (user.role !== Role.ADMIN) {
     throw new Response('Forbidden', { status: 403 });
   }
 
@@ -91,8 +92,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export async function action({ request, context }: ActionFunctionArgs) {
   // Require admin authentication
-  const user = await requireAuth(request, context);
-  if (user.role !== 'admin') {
+  const user = await requireAuthWithRole(request, context);
+  if (user.role !== Role.ADMIN) {
     throw new Response('Forbidden', { status: 403 });
   }
 

@@ -14,7 +14,13 @@ export function getGitProvider(env: ProviderEnv): GitProvider {
   const mode = (env.GIT_PROVIDER ?? 'stub').toLowerCase();
 
   switch (mode) {
-    case 'github':
+    case 'github': {
+      if (!env.GIT_OWNER || !env.GIT_REPO) {
+        throw new Error(
+          'GIT_PROVIDER is "github" but GIT_OWNER and/or GIT_REPO are not set. ' +
+            'Set them (wrangler vars or .env) to the docs repository this instance reviews.'
+        );
+      }
       return new GitHubProvider({
         GITHUB_TOKEN: env.GITHUB_TOKEN,
         GIT_TOKEN: env.GIT_TOKEN,
@@ -22,6 +28,7 @@ export function getGitProvider(env: ProviderEnv): GitProvider {
         GIT_REPO: env.GIT_REPO,
         CACHE: env.CACHE,
       });
+    }
 
     case 'stub':
     default:

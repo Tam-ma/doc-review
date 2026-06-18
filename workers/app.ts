@@ -18,7 +18,10 @@ const requestHandler = createRequestHandler(
 
 export default {
   async fetch(request, env, ctx) {
-    // Loaders/actions read bindings from `context.cloudflare.env`.
-    return requestHandler(request, { cloudflare: { env, ctx } });
+    // Provide bindings under both shapes: some routes read context.env
+    // directly (e.g. admin.emails -> context.env.DB), others use
+    // context.cloudflare.env (or the `context.env ?? context.cloudflare?.env`
+    // fallback). Passing both keeps every loader/action working.
+    return requestHandler(request, { env, cloudflare: { env, ctx } });
   },
 } satisfies ExportedHandler<Env>;
